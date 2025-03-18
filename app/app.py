@@ -9,6 +9,13 @@ professores_db = {}
 turmas_db = {}
 
 # =======================
+# Rota Inicial (Home)
+# =======================
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"mensagem": "API Flask funcionando!"}), 200
+
+# =======================
 # Rota Alunos
 # =======================
 @app.route("/alunos", methods=["GET"])
