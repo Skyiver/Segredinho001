@@ -62,16 +62,20 @@ class TestSchoolAPI(unittest.TestCase):
 
     # 5. Verifica se DELETE /alunos/<id> remove o aluno
     def test_alunos_delete_remove_aluno(self):
-        self.reset_server()
-        aluno = {"nome": "Diana", "id": 104}
-        requests.post(BASE_URL + "/alunos", json=aluno)
-        r = requests.delete(BASE_URL + f"/alunos/{104}")
-        self.assertIn(r.status_code, [200, 204])
-        # Confirma que o aluno foi removido porque né
-        r_get = requests.get(BASE_URL + f"/alunos/{104}")
-        self.assertIn(r_get.status_code, [400, 404])
-        data = r_get.json()
-        self.assertEqual(data.get("erro"), "aluno nao encontrado")
+      self.reset_server()
+    
+      #Em teoria tá criado já no reset
+      aluno_id = 104
+
+      # Deletando o aluno já criado
+      r = requests.delete(BASE_URL + f"/alunos/{aluno_id}")
+      self.assertIn(r.status_code, [200, 204])
+    
+      # Confirma que o aluno foi removido
+      r_get = requests.get(BASE_URL + f"/alunos/{aluno_id}")
+      self.assertIn(r_get.status_code, [400, 404])  # Não deve encontrar aqui
+      data = r_get.json()
+      self.assertEqual(data.get("erro"), "aluno nao encontrado")
 
     # 6. Testa se tentar criar aluno com ID duplicada retorna erro
     def test_alunos_post_id_duplicado(self):
