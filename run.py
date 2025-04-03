@@ -1,18 +1,7 @@
-from flask import Flask, jsonify
-import app.models.user as user
+from app import create_app
 import os
 
-app = Flask(__name__)
-port = int(os.environ.get("PORT", 5000))
-
-@app.route("/")
-def index():
-    return "API"
-
-@app.route('/nome', methods=['GET'])
-def getNome():
-    dados = user.users
-    return jsonify(dados["user"])
+app = create_app()
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002)
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5002)))
