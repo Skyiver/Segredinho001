@@ -1,14 +1,10 @@
-version: "3.8"
-
 services:
-  app:
+  web:
     build: .
     ports:
-      - "5000:5000"
+      - "5002:5002"
     volumes:
       - .:/app
     environment:
+      - FLASK_APP=run.py
       - FLASK_ENV=development
-      - FLASK_APP=app.py
-    depends_on:
-      # Aqui é pra adicionar outros serviços, se necessário, mas sinceramente nem ideia

@@ -1,5 +1,5 @@
 from flask import Flask, jsonify
-import user
+import app.models.user as user
 import os
 
 app = Flask(__name__)
@@ -15,4 +15,4 @@ def getNome():
     return jsonify(dados["user"])
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5002)
