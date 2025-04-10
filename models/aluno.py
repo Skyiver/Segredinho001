@@ -1,10 +1,12 @@
 class Aluno:
     id_counter = 1
 
-    def __init__(self, id, nome, idade, turma_id, data_nascimento, 
-                 nota_primeiro_semestre, nota_segundo_semestre, 
-                 media_final):
-        self.id = id
+    def __init__(self, nome, idade=None, turma_id=None, data_nascimento=None,
+                 nota_primeiro_semestre=None, nota_segundo_semestre=None,
+                 media_final=None, id=None):
+        self.id = id if id is not None else Aluno.id_counter
+        if id is None:
+            Aluno.id_counter += 1
         self.nome = nome
         self.idade = idade
         self.turma_id = turma_id
