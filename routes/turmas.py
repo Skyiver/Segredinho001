@@ -15,23 +15,22 @@ def listar_turmas():
 def criar_turma():
     try:
         data = request.get_json()
-        
-        if not data.get('descricao'):
-            return jsonify({"erro": "turma sem descricao"}), 400
-            
+        if not data.get('nome'):
+            return jsonify({"erro": "turma sem nome"}), 400
+
         if 'id' in data and data['id'] in turmas_db:
             return jsonify({"erro": "id ja utilizada"}), 400
-            
+
         turma = Turma(
-            descricao=data['descricao'],
-            idProfessor=data['idProfessor'],
+            nome=data['nome'],
+            professor_id=data.get('professor_id'),
             ativo=data.get('ativo', True),
             id=data.get('id')
         )
-        
+
         turmas_db[turma.id] = turma
         return jsonify(turma.to_dict()), 200
-        
+
     except KeyError as e:
         return jsonify({"erro": f"Campo obrigatório faltando: {str(e)}"}), 400
     except Exception as e:
@@ -53,14 +52,14 @@ def atualizar_turma(id):
         turma = turmas_db.get(id)
         if not turma:
             return jsonify({"erro": "turma nao encontrada"}), 404
-            
+
         data = request.get_json()
-        if 'descricao' not in data:
-            return jsonify({"erro": "turma sem descricao"}), 400
-            
-        turma.descricao = data['descricao']
+        if 'nome' not in data:
+            return jsonify({"erro": "turma sem nome"}), 400
+        turma.nome = data['nome']
+
         return jsonify(turma.to_dict()), 200
-        
+
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
@@ -69,7 +68,7 @@ def deletar_turma(id):
     try:
         if id not in turmas_db:
             return jsonify({"erro": "turma nao encontrada"}), 404
-            
+
         del turmas_db[id]
         return '', 204
     except Exception as e:
