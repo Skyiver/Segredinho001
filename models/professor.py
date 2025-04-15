@@ -1,15 +1,20 @@
-class Professor:
-    id_counter = 1
+from bd import db
 
-    def __init__(self, nome, idade=None, materia=None, observacao=None, id=None):
-        self.id = id if id is not None else Professor.id_counter
-        if id is None:
-            Professor.id_counter += 1
-            
+class Professor(db.Model):
+    __tablename__ = 'professores'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=False)  
+    nome = db.Column(db.String(100), nullable=False)
+    idade = db.Column(db.Integer)
+    materia = db.Column(db.String(100))
+    observacao = db.Column(db.Text)
+
+    def __init__(self, nome, **kwargs):
         self.nome = nome
-        self.idade = idade
-        self.materia = materia
-        self.observacao = observacao
+        self.id = kwargs.get('id')  
+        self.idade = kwargs.get('idade')
+        self.materia = kwargs.get('materia')
+        self.observacao = kwargs.get('observacao')
 
-    def to_dict(self):
-        return vars(self)
+    def __repr__(self):
+        return f'<Professor {self.nome}>'

@@ -1,19 +1,25 @@
-class Aluno:
-    id_counter = 1
+from bd import db
 
-    def __init__(self, nome, idade=None, turma_id=None, data_nascimento=None,
-                 nota_primeiro_semestre=None, nota_segundo_semestre=None,
-                 media_final=None, id=None):
-        self.id = id if id is not None else Aluno.id_counter
-        if id is None:
-            Aluno.id_counter += 1
+class Aluno(db.Model):
+    __tablename__ = 'alunos'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=False)  
+    nome = db.Column(db.String(100), nullable=False)
+    primeiro_semestre = db.Column(db.Float, nullable=True)
+    segundo_semestre = db.Column(db.Float, nullable=True)
+    idade = db.Column(db.Integer, nullable=True)  
+    turma_id = db.Column(db.Integer, nullable=True)
+    data_nascimento = db.Column(db.String(20), nullable=True)
+    media_final = db.Column(db.Float, nullable=True)
+
+    def __init__(self, nome, **kwargs):
         self.nome = nome
-        self.idade = idade
-        self.turma_id = turma_id
-        self.data_nascimento = data_nascimento
-        self.nota_primeiro_semestre = nota_primeiro_semestre
-        self.nota_segundo_semestre = nota_segundo_semestre
-        self.media_final = media_final
+        self.primeiro_semestre = kwargs.get('nota_primeiro_semestre')
+        self.segundo_semestre = kwargs.get('nota_segundo_semestre')
+        self.idade = kwargs.get('idade')
+        self.turma_id = kwargs.get('turma_id')
+        self.data_nascimento = kwargs.get('data_nascimento')
+        self.media_final = kwargs.get('media_final')
 
-    def to_dict(self):
-        return vars(self)
+    def __repr__(self):
+        return f'<Aluno {self.nome}>'

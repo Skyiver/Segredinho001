@@ -1,38 +1,42 @@
 from flask import Flask, jsonify
 from config import Config
+from bd import db
+from routes.alunos import alunos_bp
+from routes.professores import professores_bp
+from routes.turmas import turmas_bp
 from models.aluno import Aluno
 from models.professor import Professor
 from models.turma import Turma
-from routes.alunos import alunos_bp, alunos_db
-from routes.professores import professores_bp, professores_db
-from routes.turmas import turmas_bp, turmas_db
 
-app = Flask(__name__)
-app.config.from_object(Config)
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    db.init_app(app)
 
-# Registrar blueprints
-app.register_blueprint(alunos_bp, url_prefix='/api')
-app.register_blueprint(professores_bp, url_prefix='/api')
-app.register_blueprint(turmas_bp, url_prefix='/api')
+    with app.app_context():
+        db.create_all()
 
-@app.route('/api/reseta', methods=['POST'])
-def reset_sistema():
-    try:
-        alunos_db.clear()
-        professores_db.clear()
-        turmas_db.clear()
-        
-        Aluno.id_counter = 1
-        Professor.id_counter = 1
-        Turma.id_counter = 1
-        
-        return jsonify({"status": "sistema resetado"}), 200
-    except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+    app.register_blueprint(alunos_bp, url_prefix='/api')
+    app.register_blueprint(professores_bp, url_prefix='/api')
+    app.register_blueprint(turmas_bp, url_prefix='/api')
+
+    @app.route('/api/reseta', methods=['POST'])
+    def reset_sistema():
+        try:
+            db.session.query(Aluno).delete()
+            db.session.query(Professor).delete()
+            db.session.query(Turma).delete()
+            db.session.execute("DELETE FROM sqlite_sequence WHERE name='alunos'")
+            db.session.execute("DELETE FROM sqlite_sequence WHERE name='professores'")
+            db.session.execute("DELETE FROM sqlite_sequence WHERE name='turmas'")
+            db.session.commit()
+            return jsonify({"status": "sistema resetado"}), 200
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"erro": str(e)}), 500
+
+    return app
 
 if __name__ == '__main__':
-    app.run(
-        host=app.config['HOST'],
-        port=app.config['PORT'],
-        debug=app.config['DEBUG']
-    )
+    app = create_app()
+    app.run(host=Config.HOST, port=Config.PORT)
