@@ -1,14 +1,17 @@
-class Turma:
-    id_counter = 1
+from . import db
 
-    def __init__(self, nome, professor_id, ativo=True, id=None):
-        self.id = id if id is not None else Turma.id_counter
-        if id is None:
-            Turma.id_counter += 1
-
-        self.nome = nome
-        self.professor_id = professor_id
-        self.ativo = ativo
-
+class Turma(db.Model):
+    __tablename__ = 'turmas'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    professor_id = db.Column(db.Integer, db.ForeignKey('professores.id'), nullable=False)
+    ativo = db.Column(db.Boolean, default=True)
+    
     def to_dict(self):
-        return vars(self)
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'professor_id': self.professor_id,
+            'ativo': self.ativo
+        }

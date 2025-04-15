@@ -1,19 +1,25 @@
-class Aluno:
-    id_counter = 1
+from models import db
 
-    def __init__(self, nome, idade=None, turma_id=None, data_nascimento=None,
-                 nota_primeiro_semestre=None, nota_segundo_semestre=None,
-                 media_final=None, id=None):
-        self.id = id if id is not None else Aluno.id_counter
-        if id is None:
-            Aluno.id_counter += 1
-        self.nome = nome
-        self.idade = idade
-        self.turma_id = turma_id
-        self.data_nascimento = data_nascimento
-        self.nota_primeiro_semestre = nota_primeiro_semestre
-        self.nota_segundo_semestre = nota_segundo_semestre
-        self.media_final = media_final
-
+class Aluno(db.Model):
+    __tablename__ = 'alunos'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    idade = db.Column(db.Integer)
+    turma_id = db.Column(db.Integer, db.ForeignKey('turmas.id'))
+    data_nascimento = db.Column(db.String(10))
+    nota_primeiro_semestre = db.Column(db.Float)
+    nota_segundo_semestre = db.Column(db.Float)
+    media_final = db.Column(db.Float)
+    
     def to_dict(self):
-        return vars(self)
+        return {
+            'id': self.id,
+            'nome': self.nome,
+            'idade': self.idade,
+            'turma_id': self.turma_id,
+            'data_nascimento': self.data_nascimento,
+            'nota_primeiro_semestre': self.nota_primeiro_semestre,
+            'nota_segundo_semestre': self.nota_segundo_semestre,
+            'media_final': self.media_final
+        }
