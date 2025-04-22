@@ -5,10 +5,41 @@ services:
     build: .
     ports:
       - "5002:5002"
-    volumes:
-      - .:/code
-      - ./db:/code/db  
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-      - SQLALCHEMY_DATABASE_URI=sqlite:////code/db/app.db
+      - DATABASE_URL=mysql+pymysql://root:senha@db/escola
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: senha
+      MYSQL_DATABASE: escola
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psenha"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  test:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:senha@db/escola_test
+    command: >
+      sh -c "while ! nc -z db 3306; do sleep 2; done;
+      pytest -v tests/test.api.py --cov=app --cov-report=term-missing"
+
+volumes:
+  db_data:
