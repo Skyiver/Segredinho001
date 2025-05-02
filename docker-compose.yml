@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -8,38 +6,44 @@ services:
     environment:
       - FLASK_APP=app.py
       - FLASK_ENV=development
-      - DATABASE_URL=mysql+pymysql://root:senha@db/escola
+      - DATABASE_URL=postgresql://user:password@db/schooldb
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/alunos"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
 
   db:
-    image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password
-    restart: always
+    image: postgres:15
     environment:
-      MYSQL_ROOT_PASSWORD: senha
-      MYSQL_DATABASE: escola
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psenha"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: schooldb
     volumes:
-      - db_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d schooldb"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
-  test:
-    build: .
+  test_runner:
+    image: python:3.13-slim
     depends_on:
-      db:
+      web:
         condition: service_healthy
-    environment:
-      - DATABASE_URL=mysql+pymysql://root:senha@db/escola_test
+    volumes:
+      - .:/app
+    working_dir: /app
     command: >
-      sh -c "while ! nc -z db 3306; do sleep 2; done;
-      pytest -v tests/test.api.py --cov=app --cov-report=term-missing"
+      sh -c "pip install --no-cache-dir -r requirements.txt
+      && pytest tests/test_api.py -v"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db/schooldb
+      - BASE_URL=http://web:5002/api
 
 volumes:
-  db_data:
+  postgres_data:  

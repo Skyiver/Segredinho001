@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify
-from models.professor import Professor
-from bd import db
+from flask import Blueprint, jsonify, request
+from models import Professor
+from services.professor_service import ProfessorService
 
 professores_bp = Blueprint('professores', __name__)
 
@@ -8,70 +8,50 @@ professores_bp = Blueprint('professores', __name__)
 def listar_professores():
     try:
         professores = Professor.query.all()
-        return jsonify([prof.to_dict() for prof in professores]), 200
+        return jsonify([p.to_dict() for p in professores]), 200
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
 @professores_bp.route('/professores', methods=['POST'])
 def criar_professor():
     try:
-        data = request.get_json()
-        
-        if not data.get('nome'):
-            return jsonify({"erro": "professor sem nome"}), 400
-            
-        professor = Professor(
-            nome=data['nome'],
-            idade=data.get('idade'),
-            materia=data.get('materia'),
-            observacao=data.get('observacao')
-        )
-        
-        db.session.add(professor)
-        db.session.commit()
-        return jsonify(professor.to_dict()), 201
-        
+        data = request.get_json() or {}
+        professor = ProfessorService.criar_professor(data)
+        return jsonify(professor.to_dict()), 200
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
 @professores_bp.route('/professores/<int:id>', methods=['GET'])
 def buscar_professor(id):
     try:
-        professor = Professor.query.get_or_404(id)
+        professor = Professor.query.get(id)
+        if not professor:
+            raise ValueError("professor nao encontrado")
         return jsonify(professor.to_dict()), 200
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 404
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
 @professores_bp.route('/professores/<int:id>', methods=['PUT'])
 def atualizar_professor(id):
     try:
-        professor = Professor.query.get_or_404(id)
-        data = request.get_json()
-        
-        if 'nome' in data:
-            professor.nome = data['nome']
-        if 'idade' in data:
-            professor.idade = data['idade']
-        if 'materia' in data:
-            professor.materia = data['materia']
-        if 'observacao' in data:
-            professor.observacao = data['observacao']
-            
-        db.session.commit()
+        data = request.get_json() or {}
+        professor = ProfessorService.atualizar_professor(id, data)
         return jsonify(professor.to_dict()), 200
-        
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
 @professores_bp.route('/professores/<int:id>', methods=['DELETE'])
 def deletar_professor(id):
     try:
-        professor = Professor.query.get_or_404(id)
-        db.session.delete(professor)
-        db.session.commit()
+        ProfessorService.deletar_professor(id)
         return '', 204
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 404
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500

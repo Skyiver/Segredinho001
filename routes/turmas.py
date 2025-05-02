@@ -1,6 +1,6 @@
-from flask import Blueprint, request, jsonify
-from models.turma import Turma
-from bd import db
+from flask import Blueprint, jsonify, request
+from models import Turma
+from services.turma_service import TurmaService
 
 turmas_bp = Blueprint('turmas', __name__)
 
@@ -8,70 +8,50 @@ turmas_bp = Blueprint('turmas', __name__)
 def listar_turmas():
     try:
         turmas = Turma.query.all()
-        return jsonify([turma.to_dict() for turma in turmas]), 200
+        return jsonify([t.to_dict() for t in turmas]), 200
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
 @turmas_bp.route('/turmas', methods=['POST'])
 def criar_turma():
     try:
-        data = request.get_json()
-        
-        if not data.get('nome'):
-            return jsonify({"erro": "turma sem nome"}), 400
-            
-        turma = Turma(
-            nome=data['nome'],
-            horario=data.get('horario'),
-            ativo=data.get('ativo', True),
-            professor_id=data.get('professor_id')
-        )
-        
-        db.session.add(turma)
-        db.session.commit()
-        return jsonify(turma.to_dict()), 201
-        
+        data = request.get_json() or {}
+        turma = TurmaService.criar_turma(data)
+        return jsonify(turma.to_dict()), 200
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
 @turmas_bp.route('/turmas/<int:id>', methods=['GET'])
 def buscar_turma(id):
     try:
-        turma = Turma.query.get_or_404(id)
+        turma = Turma.query.get(id)
+        if not turma:
+            raise ValueError("turma nao encontrada")
         return jsonify(turma.to_dict()), 200
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 404
     except Exception as e:
         return jsonify({"erro": str(e)}), 500
 
 @turmas_bp.route('/turmas/<int:id>', methods=['PUT'])
 def atualizar_turma(id):
     try:
-        turma = Turma.query.get_or_404(id)
-        data = request.get_json()
-        
-        if 'nome' in data:
-            turma.nome = data['nome']
-        if 'horario' in data:
-            turma.horario = data['horario']
-        if 'ativo' in data:
-            turma.ativo = data['ativo']
-        if 'professor_id' in data:
-            turma.professor_id = data['professor_id']
-            
-        db.session.commit()
+        data = request.get_json() or {}
+        turma = TurmaService.atualizar_turma(id, data)
         return jsonify(turma.to_dict()), 200
-        
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 400
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500
 
 @turmas_bp.route('/turmas/<int:id>', methods=['DELETE'])
 def deletar_turma(id):
     try:
-        turma = Turma.query.get_or_404(id)
-        db.session.delete(turma)
-        db.session.commit()
+        TurmaService.deletar_turma(id)
         return '', 204
+    except ValueError as e:
+        return jsonify({"erro": str(e)}), 404
     except Exception as e:
-        db.session.rollback()
         return jsonify({"erro": str(e)}), 500
