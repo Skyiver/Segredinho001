@@ -4,11 +4,10 @@ WORKDIR /app
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        gcc \
-        python3-dev \
-        libpq-dev \
-        curl && \
-    rm -rf /var/lib/apt/lists/*
+    gcc \
+    python3-dev \
+    libpq-dev \
+    build-essential  # <-- Nova linha
 
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
@@ -16,6 +15,4 @@ RUN pip install --upgrade pip && \
 
 COPY . .
 
-EXPOSE 5002
-
-CMD ["python", "app.py"]
+CMD ["flask", "run", "--host=0.0.0.0", "--port=5002"]

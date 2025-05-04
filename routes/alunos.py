@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from services.aluno_service import AlunoService
 from models import db, Aluno
+from flask_jwt_extended import jwt_required
 
 alunos_bp = Blueprint('alunos', __name__)
 
@@ -13,6 +14,7 @@ def listar_alunos():
         return jsonify({"erro": str(e)}), 500
 
 @alunos_bp.route('/alunos', methods=['POST'])
+@jwt_required()
 def criar_aluno():
     try:
         data = request.get_json() or {}
