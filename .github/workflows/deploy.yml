@@ -31,13 +31,31 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies and run unit tests
+      - name: Install dependencies
         env:
           DATABASE_URL: postgresql://usuario:senha@localhost:5432/escola
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
+
+      - name: Start Flask API in background
+        env:
+          FLASK_APP: app.py
+          FLASK_ENV: development
+          DATABASE_URL: postgresql://usuario:senha@localhost:5432/escola
+        run: |
+          flask run --host=0.0.0.0 --port=5002 &
+          for i in {1..15}; do
+            curl --fail http://localhost:5002/api/alunos && break
+            sleep 1
+          done
+
+      - name: Run tests
+        env:
+          BASE_URL: http://localhost:5002/api
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        run: |
           pytest tests/ -v
 
   # 2) etapa de deploy (só roda se 'test' passar)
@@ -56,7 +74,8 @@ jobs:
           pip install awsebcli
 
       - name: Package application
-        run: zip -r deploy.zip . -x '*.git*' '*.env*' 'tests/*' 'venv/*' '__pycache__/*'
+        run: |
+          zip -r deploy.zip . -x '*.git*' '*.env*' 'tests/*' 'venv/*' '__pycache__/*'
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
