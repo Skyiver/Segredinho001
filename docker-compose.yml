@@ -8,7 +8,13 @@ services:
       - FLASK_ENV=development
       - DATABASE_URL=postgresql://user:password@db/schooldb
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/alunos"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
 
   db:
     image: postgres:15
@@ -18,6 +24,26 @@ services:
       POSTGRES_DB: schooldb
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d schooldb"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  test_runner:
+    image: python:3.13-slim
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt
+      && pytest tests/test_api.py -v"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db/schooldb
+      - BASE_URL=http://web:5002/api
 
 volumes:
-  postgres_data:
+  postgres_data:  
